@@ -23,7 +23,6 @@ package net.christianbeier.droidvnc_ng;
 
 import android.annotation.SuppressLint;
 import android.app.Notification;
-import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -46,8 +45,8 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.WindowManager;
 
-import androidx.annotation.NonNull;
-import androidx.core.app.NotificationCompat;
+import android.support.annotation.NonNull;
+import android.support.v7.app.NotificationCompat;
 
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
@@ -112,35 +111,6 @@ public class MainService extends Service {
 
         instance = this;
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            /*
-                Create notification channel
-             */
-            NotificationChannel serviceChannel = new NotificationChannel(
-                    getPackageName(),
-                    "Foreground Service Channel",
-                    NotificationManager.IMPORTANCE_DEFAULT
-            );
-            NotificationManager manager = getSystemService(NotificationManager.class);
-            manager.createNotificationChannel(serviceChannel);
-
-            /*
-                Create the notification
-             */
-            Intent notificationIntent = new Intent(this, MainActivity.class);
-
-            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
-                    notificationIntent, 0);
-
-            Notification notification = new NotificationCompat.Builder(this, getPackageName())
-                    .setSmallIcon(R.mipmap.ic_launcher)
-                    .setContentTitle(getString(R.string.app_name))
-                    .setContentText("Doing some work...")
-                    .setContentIntent(pendingIntent).build();
-
-            startForeground(NOTIFICATION_ID, notification);
-        }
-
         /*
             Get the MediaProjectionManager
          */
@@ -160,6 +130,8 @@ public class MainService extends Service {
                 prefs.getInt(Constants.PREFS_KEY_SETTINGS_PORT, 5900),
                 prefs.getString(Constants.PREFS_KEY_SETTINGS_PASSWORD, "")))
             stopSelf();
+        else
+            InputService.startSu(getApplicationContext());
     }
 
 
@@ -182,6 +154,7 @@ public class MainService extends Service {
         Log.d(TAG, "onDestroy");
         stopScreenCapture();
         vncStopServer();
+        InputService.stopSu();
         instance = null;
     }
 

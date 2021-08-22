@@ -31,7 +31,8 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import androidx.appcompat.app.AppCompatActivity;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v4.content.ContextCompat;
 
 public class WriteStorageRequestActivity extends AppCompatActivity {
 
@@ -43,7 +44,7 @@ public class WriteStorageRequestActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             Log.i(TAG, "Has no permission! Ask!");
             final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 

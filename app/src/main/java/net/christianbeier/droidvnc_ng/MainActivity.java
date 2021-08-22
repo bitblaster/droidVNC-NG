@@ -38,8 +38,10 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.util.Log;
 
-import androidx.appcompat.app.AppCompatActivity;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v4.content.ContextCompat;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -53,6 +55,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        String files_dir = getFilesDir().getAbsolutePath();
+        Log.i(TAG, "files_dir: " + files_dir);
         setContentView(R.layout.activity_main);
 
         mButtonToggle = (Button) findViewById(R.id.toggle);
@@ -61,34 +65,16 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 
-                Intent intent = new Intent(MainActivity.this, MainService.class);
-                if(mIsMainServiceRunning) {
-                    intent.setAction(MainService.ACTION_STOP);
-                    mButtonToggle.setText(R.string.start);
-                    mAddress.setText("");
-                    mIsMainServiceRunning = false;
-                }
-                else {
-                    intent.setAction(MainService.ACTION_START);
-                    mButtonToggle.setText(R.string.stop);
-                    mAddress.setText(getString(R.string.main_activity_connect_to) + " " + MainService.getIPv4AndPort());
-                    mIsMainServiceRunning = true;
-                }
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    startForegroundService(intent);
-                } else {
-                    startService(intent);
-                }
+                startStopService();
 
             }
         });
 
-        mAddress = findViewById(R.id.address);
+        mAddress = (TextView) findViewById(R.id.address);
 
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
-        final EditText port = findViewById(R.id.settings_port);
+        final EditText port = (EditText) findViewById(R.id.settings_port);
         port.setText(String.valueOf(prefs.getInt(Constants.PREFS_KEY_SETTINGS_PORT, Constants.DEFAULT_PORT)));
         port.addTextChangedListener(new TextWatcher() {
             @Override
@@ -121,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        final EditText password = findViewById(R.id.settings_password);
+        final EditText password = (EditText) findViewById(R.id.settings_password);
         password.setText(prefs.getString(Constants.PREFS_KEY_SETTINGS_PASSWORD, ""));
         password.addTextChangedListener(new TextWatcher() {
             @Override
@@ -143,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        final Switch startOnBoot = findViewById(R.id.settings_start_on_boot);
+        final Switch startOnBoot = (Switch) findViewById(R.id.settings_start_on_boot);
         startOnBoot.setChecked(prefs.getBoolean(Constants.PREFS_KEY_SETTINGS_START_ON_BOOT, true));
         startOnBoot.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @SuppressLint("ApplySharedPref")
@@ -155,8 +141,12 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        TextView about = findViewById(R.id.about);
+        TextView about = (TextView) findViewById(R.id.about);
         about.setText(getString(R.string.main_activity_about, BuildConfig.VERSION_NAME));
+
+        Intent intent = new Intent(MainActivity.this, MainService.class);
+        intent.setAction(MainService.ACTION_START);
+        startService(intent);
     }
 
     @SuppressLint("SetTextI18n")
@@ -188,47 +178,64 @@ public class MainActivity extends AppCompatActivity {
         /*
             Update Input permission display.
          */
-        TextView inputStatus = findViewById(R.id.permission_status_input);
+        TextView inputStatus = (TextView) findViewById(R.id.permission_status_input);
         if(InputService.isEnabled()) {
             inputStatus.setText(R.string.main_activity_granted);
-            inputStatus.setTextColor(getColor(android.R.color.holo_green_dark));
+            //inputStatus.setTextColor(getColor(android.R.color.holo_green_dark));
         } else {
             inputStatus.setText(R.string.main_activity_denied);
-            inputStatus.setTextColor(getColor(android.R.color.holo_red_dark));
+            //inputStatus.setTextColor(getColor(android.R.color.holo_red_dark));
         }
 
 
         /*
             Update File Access permission display.
          */
-        TextView fileAccessStatus = findViewById(R.id.permission_status_file_access);
-        if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+        TextView fileAccessStatus = (TextView) findViewById(R.id.permission_status_file_access);
+        if(ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
             fileAccessStatus.setText(R.string.main_activity_granted);
-            fileAccessStatus.setTextColor(getColor(android.R.color.holo_green_dark));
+            fileAccessStatus.setTextColor(ContextCompat.getColor(this, android.R.color.holo_green_dark));
         } else {
             fileAccessStatus.setText(R.string.main_activity_denied);
-            fileAccessStatus.setTextColor(getColor(android.R.color.holo_red_dark));
+            fileAccessStatus.setTextColor(ContextCompat.getColor(this, android.R.color.holo_red_dark));
         }
 
 
         /*
            Update Screen Capturing permission display.
         */
-        TextView screenCapturingStatus = findViewById(R.id.permission_status_screen_capturing);
+        TextView screenCapturingStatus = (TextView) findViewById(R.id.permission_status_screen_capturing);
         if(MainService.isMediaProjectionEnabled() == 1) {
             screenCapturingStatus.setText(R.string.main_activity_granted);
-            screenCapturingStatus.setTextColor(getColor(android.R.color.holo_green_dark));
+            //screenCapturingStatus.setTextColor(getColor(android.R.color.holo_green_dark));
         }
         if(MainService.isMediaProjectionEnabled() == 0) {
             screenCapturingStatus.setText(R.string.main_activity_denied);
-            screenCapturingStatus.setTextColor(getColor(android.R.color.holo_red_dark));
+            //screenCapturingStatus.setTextColor(getColor(android.R.color.holo_red_dark));
         }
         if(MainService.isMediaProjectionEnabled() == -1) {
             screenCapturingStatus.setText(R.string.main_activity_unknown);
-            screenCapturingStatus.setTextColor(getColor(android.R.color.darker_gray));
+            //screenCapturingStatus.setTextColor(getColor(android.R.color.darker_gray));
         }
 
     }
 
+    private void startStopService() {
+        Intent intent = new Intent(MainActivity.this, MainService.class);
+        if(mIsMainServiceRunning) {
+            intent.setAction(MainService.ACTION_STOP);
+            mButtonToggle.setText(R.string.start);
+            mAddress.setText("");
+            mIsMainServiceRunning = false;
+        }
+        else {
+            intent.setAction(MainService.ACTION_START);
+            mButtonToggle.setText(R.string.stop);
+            mAddress.setText(getString(R.string.main_activity_connect_to) + " " + MainService.getIPv4AndPort());
+            mIsMainServiceRunning = true;
+        }
+
+        startService(intent);
+    }
 
 }
